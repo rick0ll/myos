@@ -6,45 +6,16 @@
 
 __attribute__((no_stack_protector)) uint32_t initCanary(void);
 
-extern uint32_t __stack_chk_guard;
-
-__attribute__((noinline)) void test(void) {
-  // Un array da 16 byte per attivare lo stack protector
-  volatile char buffer[16];
-  buffer[0] = 'X';
-
-  // Prendiamo l'indirizzo del buffer e lo camuffiamo in un puntatore generico.
-  // Questo impedisce a GCC di capire che stiamo uscendo dai confini del buffer
-  // durante la compilazione (zero warning!).
-  volatile char *p = (volatile char *)((uintptr_t)buffer);
-
-  // Andiamo a sovrascrivere i byte immediatamente successivi all'allineamento.
-  // Su architetture a 32-bit, il canary si trova solitamente tra il byte 16 e
-  // il byte 32. Scrivendo solo in questa finestrella, calpestiamo il Canary MA
-  // lasciamo intatto il vecchio EBP e l'indirizzo di ritorno più in alto!
-  p[16] = 0xAA;
-  p[17] = 0xBB;
-  /* p[18] = 0xCC; */
-  /* p[19] = 0xDD; */
-  /* p[20] = 0xEE; */
-  /* p[21] = 0xFF; */
-}
-
 // Metto no_stack_protector pk quando il kernel è compilato
 // il canary, inizializzato nel file stack_protector.c sarà diverso da
 // quello verrà ora creato randomicamente, causando quindi un canary
 // missmatch ed panic. Il kernel non ritorna mai ma per sicurezza.
 __attribute__((no_stack_protector)) void kernel_main(void) {
-  terminal_initialize();
-  printf("Kernel avviato con successo!\n");
-
-  // 2. Eseguiamo l'inizializzazione del canary DOPO
-  printf("Inizializzo lo stack protector...\n");
   __stack_chk_guard = initCanary();
-  printf("Stack protector inizializzato!\n");
+  terminal_initialize();
 
-  test();
-  printf("test completato\n");
+  printf("Stack protector inizializzato!\n");
+  printf("Kernel avviato con successo!\n");
 }
 
 __attribute__((no_stack_protector)) uint32_t initCanary(void) {

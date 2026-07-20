@@ -2,7 +2,6 @@
 #define _KERNEL_TTY_H
 
 #include <stddef.h>
-#include <stdint.h>
 
 __attribute__((no_stack_protector)) void terminal_initialize(void);
 void terminal_putchar(char c);

@@ -10,8 +10,12 @@ __attribute__((noreturn)) void __stack_chk_fail(void) {
   // meglio non chiamare panic pk se sono in questa func => stack compromesso,
   // meglio non usarlo
   /* panic("Stack smashing detected"); */
-
   uint16_t *video_mem = (uint16_t *)0xb8000;
+
+  uint16_t blank_pixel = (uint16_t)' ' | (0x1F << 8);
+  for (size_t i = 0; i < 80 * 25; i++) {
+    video_mem[i] = blank_pixel;
+  }
 
   const char *msg = "Stack smashing detected";
   for (size_t i = 0; msg[i] != '\0'; i++) {
