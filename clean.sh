@@ -2,8 +2,10 @@
 set -e
 . ./config.sh
 
+N_CORES=$(expr $(sysctl -n hw.logicalcpu) + 1)
+
 for PROJECT in $PROJECTS; do
-  (cd $PROJECT && $MAKE clean)
+  (cd $PROJECT && $MAKE -j "$N_CORES" clean)
 done
 
 rm -rf sysroot
