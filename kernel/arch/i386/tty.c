@@ -5,7 +5,7 @@
 
 #include <kernel/tty.h>
 
-#include "vga.h"
+#include <kernel/vga.h>
 
 static const size_t vga_width = 80;
 static const size_t vga_height = 25;
@@ -29,20 +29,10 @@ void terminal_initialize(void) {
   }
 }
 
-__attribute__((__always_inline__)) void terminal_initialize_inline(void) {
-  terminal_row = 0;
-  terminal_column = 0;
-  terminal_color = vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
-  terminal_buffer = vga_memory;
-  for (size_t y = 0; y < vga_height; y++) {
-    for (size_t x = 0; x < vga_width; x++) {
-      const size_t index = y * vga_width + x;
-      terminal_buffer[index] = vga_entry(' ', terminal_color);
-    }
-  }
-}
-
 void terminal_setcolor(uint8_t color) { terminal_color = color; }
+void terminal_resetcolor() {
+  terminal_color = vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
+}
 
 void terminal_putentryat(unsigned char c, uint8_t color, size_t x, size_t y) {
   const size_t index = y * vga_width + x;
@@ -91,7 +81,6 @@ void terminal_putchar(char c) {
   }
 }
 
-__attribute__((__always_inline__)) void terminal_putchar_inline(char c) {}
 void terminal_write(const char *data, size_t size) {
   for (size_t i = 0; i < size; i++)
     terminal_putchar(data[i]);

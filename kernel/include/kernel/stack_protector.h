@@ -1,8 +1,9 @@
 
 #ifndef _KERNEL_STACK_PROTECTOR_H
-#define _KERNEL_STACK_PROTECTOR_H
+#define _KERNEL_STACK_PROTECTOR_H 1
 
 #include <stdint.h>
+#include <sys/cdefs.h>
 
 // extern serve per dire che il canary è presente in un file e che sicuramente
 // l'ho definito

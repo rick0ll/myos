@@ -13,9 +13,9 @@ EXEC_PREFIX?=$(PREFIX)
 INCLUDEDIR?=$(PREFIX)/include
 LIBDIR?=$(EXEC_PREFIX)/lib
 
-CFLAGS:=$(CFLAGS) -ffreestanding -Wall -Wextra
-CPPFLAGS:=$(CPPFLAGS) -D__is_libc -Iinclude -I../kernel/include/
-LIBK_CFLAGS:=$(CFLAGS)
+CFLAGS:=$(CFLAGS) -ffreestanding -Wall -Wextra -fno-pic
+CPPFLAGS:=$(CPPFLAGS) -D__is_libc -Iinclude -I../kernel/include/ -fno-pic
+LIBK_CFLAGS:=$(CFLAGS) -D__is_libk
 LIBK_CPPFLAGS:=$(CPPFLAGS) -D__is_libk
 
 ARCHDIR=../kernel/arch/i386
@@ -29,19 +29,19 @@ LIBK_CPPFLAGS:=$(LIBK_CPPFLAGS) $(KERNEL_ARCH_CPPFLAGS)
 
 FREEOBJS=\
 $(ARCH_FREEOBJS) \
-stdio/printf.o \
+stdio/vprintf.o \
 stdio/putchar.o \
 stdio/printf.o\
-stdio/oldprintf.o\
 stdio/puts.o \
 stdlib/abort.o\
+stdlib/itoa.o \
+stdlib/atoi.o \
+stdlib/dec_to_hex.o \
 string/memcmp.o \
 string/memcpy.o \
 string/memmove.o \
 string/memset.o \
 string/strlen.o \
-stdio/itoa.o \
-stdio/atoi.o \
 
 HOSTEDOBJS=\
 $(ARCH_HOSTEDOBJS) \

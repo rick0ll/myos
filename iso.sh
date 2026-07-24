@@ -11,8 +11,9 @@ cp sysroot/boot/myos.kernel isodir/boot/myos.kernel
 #Quando il PC si avvia, GRUB leggerà questo file e mostrerà la schermata di selezione con la voce "myos",
 #sapendo che per avviarlo deve caricare il file /boot/myos.kernel usando lo standard multiboot.
 cat > isodir/boot/grub/grub.cfg << EOF
-menuentry "myos" {
-	multiboot /boot/myos.kernel
+menuentry "hola amigo" {
+	multiboot2 /boot/myos.kernel
+    boot
 }
 EOF
 i686-elf-grub-mkrescue -o myos.iso isodir

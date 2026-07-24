@@ -1,4 +1,5 @@
 #!/bin/sh
+
 #set -e := se qlcs fallisce blocca tutto, non continuare
 set -e
 . ./headers.sh

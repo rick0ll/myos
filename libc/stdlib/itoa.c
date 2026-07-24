@@ -1,5 +1,5 @@
-#include <stdbool.h>
-#include <stdio.h>
+
+#include <stdlib.h>
 
 int itoa(int num, char number[11]) {
 

@@ -1,8 +1,8 @@
+#include <kernel/logger.h>
 #include <kernel/stack_protector.h>
 #include <kernel/tty.h>
 
 #include <stdint.h>
-#include <stdio.h>
 
 __attribute__((no_stack_protector)) uint32_t initCanary(void);
 
@@ -10,12 +10,16 @@ __attribute__((no_stack_protector)) uint32_t initCanary(void);
 // il canary, inizializzato nel file stack_protector.c sarà diverso da
 // quello verrà ora creato randomicamente, causando quindi un canary
 // missmatch ed panic. Il kernel non ritorna mai ma per sicurezza.
-__attribute__((no_stack_protector)) void kernel_main(void) {
+__attribute__((no_stack_protector)) void kernel_main(uint32_t addr) {
   __stack_chk_guard = initCanary();
   terminal_initialize();
 
-  printf("Stack protector inizializzato!\n");
-  printf("Kernel avviato con successo!\n");
+  log_info("Stack protector inizializzato!\n");
+  log_debug("Stack guard value hex: {x}\n", __stack_chk_guard);
+
+  log_info("Kernel avviato con successo!\n");
+
+  log_debug("Useful info address: {x}\n", addr);
 }
 
 __attribute__((no_stack_protector)) uint32_t initCanary(void) {
@@ -32,23 +36,12 @@ __attribute__((no_stack_protector)) uint32_t initCanary(void) {
   // EDX che sono importanti siccome vengono usati inizialmente per gestire lo
   // stack frame
   // asm volatile ( "codice" : output : input : clobber );
-  asm volatile(
-      "pushl %%eax\n\t"    // Salva EAX sullo stack
-      "pushl %%edx\n\t"    // Salva EDX sullo stack
-      "rdtsc\n\t"          // Esegue RDTSC (il tempo finisce in EDX:EAX)
-      "movl %%eax, %0\n\t" // Sposta la parte bassa (EAX) nella variabile va val
-                           // riferita con %0
-      "popl %%edx\n\t"     // Ripristina EDX originale
-      "popl %%eax"         // Ripristina EAX originale
-      : "=r"(val)          // Output: una variabile in un registro qualsiasi
-                  // scelto da GCC => viene scelto un registro che conterrà il
-                  // dato che poi verrà movl nella variabile riferita con %0
-      :          // Nessun input
-      : "memory" // Dice a GCC di non fare assunzioni sulla memoria per evitare
-                 // errori sui registri che abbiamo appena usato(clobber)
-  );
+  asm volatile("rdtsc" // Esegue RDTSC (il tempo finisce in EDX:EAX)
+               : "=a"(val)
+               :
+               : "edx");
 
-  if (val == 0) {
+  if (val == 0 || val == 0xFFFFFFFF) {
     // siccome kernel per cpu 32bit e clock cpu di 64bit lo divide in due
     // parti
     uint32_t low, high;

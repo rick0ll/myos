@@ -16,7 +16,7 @@ INCLUDEDIR?=$(PREFIX)/include
 CFLAGS:=$(CFLAGS) -ffreestanding -Wall -Wextra
 CPPFLAGS:=$(CPPFLAGS) -D__is_myos_kernel -Iinclude
 LDFLAGS:=$(LDFLAGS)
-LIBS:=$(LIBS) -nostdlib -lk -lgcc
+LIBS:=$(LIBS)
 
 ARCHDIR=arch/i386
 include $(ARCHDIR)/make.config
@@ -32,6 +32,7 @@ kernel/kernel.o \
 kernel/stack_protector.o\
 kernel/random.o \
 kernel/panic.o \
+kernel/logger.o \
 
 OBJS=\
 $(KERNEL_BOOT)\
@@ -43,13 +44,13 @@ $(ARCHDIR)/crtn.o \
 
 LINK_LIST=\
 $(KERNEL_BOOT)\
-$(LDFLAGS) \
 $(ARCHDIR)/crti.o \
 $(ARCHDIR)/crtbegin.o \
 $(KERNEL_OBJS) \
 $(LIBS) \
 $(ARCHDIR)/crtend.o \
 $(ARCHDIR)/crtn.o \
+$(LDFLAGS) \
 
 .PHONY: all clean install install-headers install-kernel
 .SUFFIXES: .o .c .S
@@ -57,8 +58,8 @@ $(ARCHDIR)/crtn.o \
 all: myos.kernel
 
 myos.kernel: $(OBJS) $(ARCHDIR)/linker.ld
-	$(CC) -T $(ARCHDIR)/linker.ld -o $@ $(LINK_LIST) -nostdlib -lgcc
-	i686-elf-grub-file --is-x86-multiboot myos.kernel
+	$(CC) -T $(ARCHDIR)/linker.ld -o $@ $(LINK_LIST) -nostdlib -lk -lgcc
+	i686-elf-grub-file --is-x86-multiboot2 myos.kernel
 
 $(ARCHDIR)/crtbegin.o $(ARCHDIR)/crtend.o:
 	OBJ=`$(CC) $(LDFLAGS) -print-file-name=$(@F)` && cp "$$OBJ" $@
