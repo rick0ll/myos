@@ -2,7 +2,6 @@ ENTRY(kernel_start)
 
 SECTIONS
 {
-    /* Punto di caricamento ad 1M o 2M */
     . = 1M;
 
     /* Unica sezione per l'header e il codice */

@@ -33,6 +33,7 @@ kernel/stack_protector.o\
 kernel/random.o \
 kernel/panic.o \
 kernel/logger.o \
+kernel/parse_info_requests.o \
 
 OBJS=\
 $(KERNEL_BOOT)\

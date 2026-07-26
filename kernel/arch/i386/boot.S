@@ -6,7 +6,7 @@
 // .set CHECKSUM, -(MAGIC + FLAGS) # checksum of above, to prove we are multiboot
 
 #define ASM_FILE 1
-#include "multiboot2.h"
+#include <multiboot2.h>
 
 
 .set HEADER_LENGTH, multiboot_header_end - multiboot_header
@@ -78,23 +78,23 @@ multiboot_header:
         .short OPTIONAL
         .long information_request_end - information_request_start
 
-        .long BOOT_COMMAND_LINE_INFO  //dice quali opz avvio kernel
-        .long MODULES_RAM_ADDRESSES_INFO //dice dove si trovano i moduli nella RAM libera
-        .long MEMORY_MAP_INFO //chiede info Memory Map => mappa completa RAM libera da usare
-        .long ELF_SYMBOLS_INFO//Da la tabellbba simboli degli eseguibili
-        .long FRAMEBUFFER_INFO
-        //.long SMBIOS_TABLE_INFO
-        .long ACPI_TABLE_V1_INFO
-        .long ACPI_TABLE_V2_INFO  //Da puntatore a tabelle ACPI: si può vedere dal kernel num. core e CPU e altro
-        .long NETWORKING_INFO  //Info su scheda di rete
+        .long MULTIBOOT_COMMAND_LINE_INFO  //dice quali opz avvio kernel
+        .long MULTIBOOT_MODULES_RAM_ADDRESSES_INFO //dice dove si trovano i moduli nella RAM libera
+        .long MULTIBOOT_MEMORY_MAP_INFO //chiede info Memory Map => mappa completa RAM libera da usare
+        .long MULTIBOOT_ELF_SYMBOLS_INFO//Da la tabellbba simboli degli eseguibili
+        .long MULTIBOOT_FRAMEBUFFER_INFO
+        .long MULTIBOOT_SMBIOS_TABLE_INFO
+        .long MULTIBOOT_ACPI_TABLE_V1_INFO
+        .long MULTIBOOT_ACPI_TABLE_V2_INFO  //Da puntatore a tabelle ACPI: si può vedere dal kernel num. core e CPU e altro
+        .long MULTIBOOT_NETWORKING_INFO  //Info su scheda di rete
     information_request_end:
 
     //DICO CHE HO FINITO I TAG
     .align ALIGNMENT
     final_tag_start:
-        .short 0
-        .short 0
-        .long 8
+        .short END_REQUEST_TAG
+        .short MANDATORY
+        .long final_tag_end - final_tag_start
     final_tag_end:
 multiboot_header_end:
 
@@ -121,7 +121,7 @@ kernel_start:
 
     //tolgo 16 / ultimi 4 bit da %esp per fare che sia un multiplo di 16 che CPU richiede per qualche motivo
     //-16 pk è 16 (000.0010000) invece -16 è (1111...110000)
-    ; andl $-16, %esp
+    andl $-16, %esp
 
     //pushl è per 32bit data push per 64bit
     pushl %ebx // pusho su stack per il mio kernel in C pk grub ha messo le info che ho richieste nella memoria puntata dal registro ebx

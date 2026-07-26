@@ -10,6 +10,7 @@
 #define MANDATORY 0
 
 #define ENTRY_POINT_TAG 3
+
 #define FRAMEBUFFER_TAG 5
 #define WIDTH 2048
 #define HEIGHT 1024
@@ -26,15 +27,19 @@
 #define POSITION_PREFERENCE_HIGH 2
 
 #define INFORMATION_REQUEST_TAG 1
-#define BOOT_COMMAND_LINE_INFO 1
-#define MODULES_RAM_ADDRESSES_INFO 3
-#define MEMORY_MAP_INFO 6
-#define ELF_SYMBOLS_INFO 9
-#define FRAMEBUFFER_INFO 8
-#define SMBIOS_TABLE_INFO 13
-#define ACPI_TABLE_V1_INFO 14
-#define ACPI_TABLE_V2_INFO 15
-#define NETWORKING_INFO 16
+#define MULTIBOOT_COMMAND_LINE_INFO 1 // si
+#define MULTIBOOT_BOOTLOADER_NAME_INFO 2
+#define MULTIBOOT_MODULES_RAM_ADDRESSES_INFO 3
+#define MULTIBOOT_BASIC_MEMORY_INFO 4
+#define MULTIBOOT_MEMORY_MAP_INFO 6
+#define MULTIBOOT_ELF_SYMBOLS_INFO 9
+#define MULTIBOOT_FRAMEBUFFER_INFO 8
+#define MULTIBOOT_SMBIOS_TABLE_INFO 13
+#define MULTIBOOT_ACPI_TABLE_V1_INFO 14
+#define MULTIBOOT_ACPI_TABLE_V2_INFO 15
+#define MULTIBOOT_NETWORKING_INFO 16
+
+#define END_REQUEST_TAG 0
 
 #define STACK_SIZE 16384
 #define STACK_ALIGNMENT 16
@@ -56,7 +61,6 @@ struct multiboot_tag {
 struct multiboot_info_header {
   uint32_t total_size;
   uint32_t reserved;
-  struct multiboot_tag first_tag[]; // I tag iniziano subito dopo
 } __attribute__((packed));
 
 /* =========================================================================
@@ -65,6 +69,13 @@ struct multiboot_info_header {
 
 // MBI Tag 1: Boot Command Line
 struct multiboot_tag_string {
+  uint32_t type; // 1
+  uint32_t size;
+  char string[]; // Stringa C con \0 finale
+} __attribute__((packed));
+
+// MBI Tag 2: Bootloader name
+struct multiboot_tag_bootloader_name {
   uint32_t type; // 1
   uint32_t size;
   char string[]; // Stringa C con \0 finale
@@ -79,11 +90,24 @@ struct multiboot_tag_module {
   char string[];      // Nome/parametri del modulo
 } __attribute__((packed));
 
+// MBI Tag 4: Basic Memory Info
+struct multiboot_tag_basic_memory_info {
+  uint32_t type; // 4
+  uint32_t size;
+  uint32_t mem_start;
+  uint32_t mem_end;
+} __attribute__((packed));
+
 // Singola voce della Memory Map (24 byte)
 struct multiboot_mmap_entry {
   uint64_t base_addr; // Valore intero a 64 bit!
   uint64_t length;    // Valore intero a 64 bit!
-  uint32_t type;      // 1 = RAM libera, 3 = ACPI, 4/5 = Riservata
+  uint32_t type;
+#define MULTIBOOT_MEMORY_AVAILABLE 1
+#define MULTIBOOT_MEMORY_RESERVED 2
+#define MULTIBOOT_MEMORY_ACPI_RECLAIMABLE 3
+#define MULTIBOOT_MEMORY_NVS 4
+#define MULTIBOOT_MEMORY_BADRAM 5
   uint32_t reserved;
 } __attribute__((packed));
 

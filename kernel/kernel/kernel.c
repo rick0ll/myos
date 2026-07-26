@@ -1,25 +1,14 @@
-#include <kernel/logger.h>
-#include <kernel/stack_protector.h>
-#include <kernel/tty.h>
 
-#include <stdint.h>
-
-__attribute__((no_stack_protector)) uint32_t initCanary(void);
-
+#include <kernel/kernel.h>
 // Metto no_stack_protector pk quando il kernel è compilato
 // il canary, inizializzato nel file stack_protector.c sarà diverso da
 // quello verrà ora creato randomicamente, causando quindi un canary
 // missmatch ed panic. Il kernel non ritorna mai ma per sicurezza.
-__attribute__((no_stack_protector)) void kernel_main(uint32_t addr) {
+__attribute__((no_stack_protector)) void kernel_main(uintptr_t addr) {
   __stack_chk_guard = initCanary();
   terminal_initialize();
-
-  log_info("Stack protector inizializzato!\n");
-  log_debug("Stack guard value hex: {x}\n", __stack_chk_guard);
-
+  parse_info_request(addr);
   log_info("Kernel avviato con successo!\n");
-
-  log_debug("Useful info address: {x}\n", addr);
 }
 
 __attribute__((no_stack_protector)) uint32_t initCanary(void) {
