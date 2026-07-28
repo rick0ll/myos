@@ -10,10 +10,10 @@ extern "C" {
 #endif
 
 // int old_printf(const char *__restrict, ...);
-int putchar(int);
-int puts(const char *);
-int printf(const char *__restrict, ...);
-int vprintf(const char *__restrict, va_list);
+int putchar(const unsigned char);
+int puts(const unsigned char *);
+int printf(const unsigned char *__restrict, ...);
+int vprintf(const unsigned char *__restrict, va_list);
 
 #ifdef __cplusplus
 }

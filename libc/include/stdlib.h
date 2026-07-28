@@ -18,9 +18,9 @@ extern "C" {
 __attribute__((__noreturn__)) void abort(void);
 void panic(const char *);
 
-int atoi(const char *);
-int itoa(int, char[11]);
-void dec_to_hex(uint32_t num, char hex[11]);
+int atoi(const unsigned char *);
+int itoa(int, unsigned char[11]);
+int dec_to_hex(uint32_t num, unsigned char *hex);
 
 #ifdef __cplusplus
 }

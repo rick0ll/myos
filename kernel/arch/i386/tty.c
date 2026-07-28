@@ -57,9 +57,8 @@ void terminal_delete_last_line() {
   }
 }
 
-void terminal_putchar(char c) {
+void terminal_putchar(const unsigned char c) {
   unsigned char uc = c;
-
   if (c == '\n') {
     terminal_column = 0;
     if (++terminal_row == vga_height) {
@@ -81,11 +80,11 @@ void terminal_putchar(char c) {
   }
 }
 
-void terminal_write(const char *data, size_t size) {
+void terminal_write(const unsigned char *data, size_t size) {
   for (size_t i = 0; i < size; i++)
     terminal_putchar(data[i]);
 }
 
-void terminal_writestring(const char *data) {
+void terminal_writestring(const unsigned char *data) {
   terminal_write(data, strlen(data));
 }

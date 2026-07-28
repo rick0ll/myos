@@ -33,7 +33,7 @@ multiboot_header:
         .short ENTRY_POINT_TAG
         .short MANDATORY
         .long entry_point_tag_end - entry_point_tag_start
-        .long kernel_start
+        .long kernel_entry
     entry_point_tag_end:
 
     //DEFINISCO ASPETTO E DIMENSIONI FINESTRA
@@ -107,9 +107,9 @@ stack_top:
 
 # The kernel entry p.long.
 .section .text
-.global kernel_start
-.type kernel_start, @function
-kernel_start:
+.global kernel_entry
+.type kernel_entry, @function
+kernel_entry:
 
     cmpl $0x36D76289, %eax//se bootloader è multiboot2 allora in eax c'è il valore else non è il bootloader che il mio kernel usa
     jne .bad_bootloader
@@ -137,7 +137,7 @@ kernel_start:
 1:	hlt
     jmp 1b
 
-.size kernel_start, . - kernel_start
+.size kernel_entry, . - kernel_entry
 
 .global .bad_bootloader
 

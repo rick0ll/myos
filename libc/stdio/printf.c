@@ -2,7 +2,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-int printf(const char *__restrict__ str, ...) {
+int printf(const unsigned char *__restrict__ str, ...) {
   va_list parameters;
   va_start(parameters, str);
 

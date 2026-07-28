@@ -15,5 +15,6 @@ extern uint32_t __stack_chk_guard;
 #define __stack_chk_guard_local __stack_chk_guard
 
 __attribute__((no_stack_protector, noreturn)) void __stack_chk_fail(void);
+__attribute__((no_stack_protector)) uint32_t initCanary(void);
 
 #endif

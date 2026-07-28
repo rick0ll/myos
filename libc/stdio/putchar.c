@@ -5,7 +5,7 @@
 #include <kernel/tty.h>
 #endif
 
-int putchar(int c) {
+int putchar(const unsigned char c) {
 #if defined(__KERNEL__)
   terminal_putchar(c);
 #else

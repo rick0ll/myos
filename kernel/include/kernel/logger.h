@@ -55,6 +55,6 @@ int kernel_log_internal(uint8_t color, const char *__restrict__ level,
   do {                                                                         \
     if (LOG_LEVEL_FATAL >= GLOBAL_LOG_LEVEL)                                   \
       kernel_log_internal(0x4F, "[FATAL] ", fmt, ##__VA_ARGS__);               \
-  } while (0) endif
+  } while (0)
 
 #endif

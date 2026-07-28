@@ -1,7 +1,7 @@
 
 #include <stdlib.h>
 
-int itoa(int num, char number[11]) {
+int itoa(int num, unsigned char number[11]) {
 
   if (num == 0) {
     number[0] = '0';

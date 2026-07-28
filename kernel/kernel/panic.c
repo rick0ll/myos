@@ -1,10 +1,11 @@
-#include <kernel/tty.h>
+
+#include <kernel/panic.h>
 
 // Evita falsi allarmi (Warning del compilatore):
 // Ottimizzazione
 __attribute__((__noreturn__)) void panic(const char *msg) {
 
-  terminal_writestring(msg);
+  log_fatal(msg);
   /*
    * Blocco di sicurezza estremo per congelare la CPU:
    * - cli: Disabilita le interruzioni hardware (ignora timer, tastiera, ecc.)

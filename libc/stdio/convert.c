@@ -1,4 +1,3 @@
-#include <stdint.h>
 #include <stdlib.h>
 
 int atoi(const char *str) {
@@ -14,7 +13,7 @@ int atoi(const char *str) {
   return res;
 }
 
-uint32_t itoa(int num, char number[11]) {
+int itoa(int num, char number[11]) {
 
   if (num == 0) {
     number[0] = '0';

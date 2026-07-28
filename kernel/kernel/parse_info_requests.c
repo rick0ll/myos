@@ -1,7 +1,5 @@
 
-#include <kernel/logger.h>
 #include <kernel/parse_info_requests.h>
-#include <multiboot2.h>
 
 void parse_info_request(uintptr_t addr) {
   if (addr & 7) {
@@ -30,23 +28,9 @@ void parse_info_request(uintptr_t addr) {
       break;
 
     case MULTIBOOT_MEMORY_MAP_INFO:
-      struct multiboot_tag_mmap *tag_mmap = (struct multiboot_tag_mmap *)tag;
-      /* log_info("MULTIBOOT MEMORY MAP INFO\n"); */
-      /* log_info("Entry version: {x}\n", tag_mmap->entry_version); */
-      /* log_info("Entry size: {x}\n", tag_mmap->entry_size); */
-      uint32_t entries_size =
-          size - sizeof(tag_mmap->size) - sizeof(tag_mmap->type) -
-          sizeof(tag_mmap->entry_size) - sizeof(tag_mmap->entry_version);
-      uint32_t entries_num = entries_size / tag_mmap->entry_size;
-      /* log_info("Entries num: {d}\n", entries_num); */
-
-      /* for (uint32_t i = 0; i < entries_num; i++) { */
-      /* struct multiboot_mmap_entry *entry = &tag_mmap->entries[i]; */
-      /* log_info("Entry type: {x}\n", entry->type); */
-      /*   log_info("Entry base_addr: {x}\n", entry->base_addr); */
-      /* log_info("Entry length: {x}\n", entry->length); */
-
       /* log_info("Entries Over\n\n"); */
+      extern struct multiboot_tag_mmap *tag_mmap;
+      tag_mmap = (struct multiboot_tag_mmap *)tag;
       break;
     case MULTIBOOT_BOOTLOADER_NAME_INFO:
       struct multiboot_tag_bootloader_name *tag_bootloader_name =
@@ -88,8 +72,8 @@ void parse_info_request(uintptr_t addr) {
     }
 
     // rendo uniptr pk sommano a un ptr il compile fa ptr + (num *
-    // sizeof(tipo del puntato di ptr)), unitptr è solo una variabile dunque non
-    // succedde
+    // sizeof(tipo del puntato di ptr)), unitptr è solo una variabile dunque
+    // non succedde
     uintptr_t next_addr = (uintptr_t)tag + size;
     // Per essere allineato a 8byte multiboot2 può creare un padding tra i tag
     // che va gestito

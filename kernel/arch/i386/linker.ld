@@ -1,9 +1,10 @@
-ENTRY(kernel_start)
+ENTRY(kernel_entry)
 
 SECTIONS
 {
     . = 1M;
 
+    _kernel_start = .;
     /* Unica sezione per l'header e il codice */
     .text : ALIGN(4K)
     {
@@ -30,4 +31,6 @@ SECTIONS
         *(COMMON)
         *(.bss*)
     }
+
+    _kernel_end = .;
 }

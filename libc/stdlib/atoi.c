@@ -1,4 +1,4 @@
-int atoi(const char *str) {
+int atoi(const unsigned char *str) {
   int i = 0;
   int res = 0;
 

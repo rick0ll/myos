@@ -1,10 +1,13 @@
 
 
+#include <kernel/gdt.h>
 #include <kernel/logger.h>
+#include <kernel/mmap.h>
+#include <kernel/panic.h>
 #include <kernel/parse_info_requests.h>
 #include <kernel/stack_protector.h>
 #include <kernel/tty.h>
 
 #include <stdint.h>
 
-__attribute__((no_stack_protector)) uint32_t initCanary(void);
+void kernel_main(uintptr_t mb_addr);
