@@ -1,12 +1,20 @@
-#include <stdint.h>
 #ifndef _STDLIB_H
 #define _STDLIB_H 1
 
+#include <stdint.h>
 #include <sys/cdefs.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#define MULTIPLO_PER_ECCESSO(NUM, SIZE)                                        \
+  (((size_t)(NUM) + ~(SIZE - 1)) & (SIZE - 1))
+
+#define MULTIPLO_PER_DIFETTO(NUM, SIZE) ((size_t)(NUM) & (SIZE - 1))
+
+#define KB(x) ((size_t)(x) << 10)
+#define MB(x) ((size_t)(x) << 20)
 
 #define SWAP(T, a, b)                                                          \
   do {                                                                         \

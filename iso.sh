@@ -13,7 +13,6 @@ cp sysroot/boot/myos.kernel isodir/boot/myos.kernel
 cat > isodir/boot/grub/grub.cfg << EOF
 menuentry "hola amigo" {
 	multiboot2 /boot/myos.kernel
-    boot
 }
 EOF
 i686-elf-grub-mkrescue -o myos.iso isodir

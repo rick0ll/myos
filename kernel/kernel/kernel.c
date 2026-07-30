@@ -8,11 +8,7 @@ __attribute__((no_stack_protector)) void kernel_main(uintptr_t mb_addr) {
   __stack_chk_guard = initCanary();
   terminal_initialize();
   parse_info_request(mb_addr);
+  pmm_init_bitmap();
 
-  if (tag_mmap == NULL) {
-    panic("Nessuna Memory Map ricevuta da Multiboot2");
-  }
-
-  initGDT();
   log_info("Kernel avviato con successo!\n");
 }

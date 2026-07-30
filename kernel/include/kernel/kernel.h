@@ -5,6 +5,7 @@
 #include <kernel/mmap.h>
 #include <kernel/panic.h>
 #include <kernel/parse_info_requests.h>
+#include <kernel/pmm.h>
 #include <kernel/stack_protector.h>
 #include <kernel/tty.h>
 

@@ -7,6 +7,7 @@
 
 #define ASM_FILE 1
 #include <multiboot2.h>
+#include <kernel/gdt.h>
 
 
 .set HEADER_LENGTH, multiboot_header_end - multiboot_header
@@ -33,7 +34,7 @@ multiboot_header:
         .short ENTRY_POINT_TAG
         .short MANDATORY
         .long entry_point_tag_end - entry_point_tag_start
-        .long kernel_entry
+        .long _start
     entry_point_tag_end:
 
     //DEFINISCO ASPETTO E DIMENSIONI FINESTRA
@@ -105,45 +106,70 @@ stack_bottom:
     .skip STACK_SIZE
 stack_top:
 
-# The kernel entry p.long.
-.section .text
-.global kernel_entry
-.type kernel_entry, @function
-kernel_entry:
+.section .data
+.align 8
+gdt_start:
+    .quad  GDT_ENTRY_NULL               // 0x00: Null Descriptor
+    .quad  GDT_ENTRY_KERNEL_CODE    // 0x08: Kernel Code Segment (0x0 - 4GB, Ring 0)
+    .quad  GDT_ENTRY_KERNEL_DATA    // 0x10: Kernel Data Segment (0x0 - 4GB, Ring 0)
+gdt_end:
 
-    cmpl $0x36D76289, %eax//se bootloader è multiboot2 allora in eax c'è il valore else non è il bootloader che il mio kernel usa
-    jne .bad_bootloader
+gdt_descriptor:
+    .short gdt_end - gdt_start - 1 #Limit => num ultimo elemento
+    .int gdt_start                  #gdt addr
+
+
+.section .text
+.global _start
+.type _start, @function
+_start:
+    cmpl $MAGIC_MULTIBOOT2_PROOF_NUMBER, %eax//se bootloader è multiboot2 allora in eax c'è il valore else non è il bootloader che il mio kernel usa
+    jne bad_bootloader
 
     //preparare %esp per avere stack p.longer pronta per l'uso della stack
     movl $stack_top, %esp
-
-
 
     //tolgo 16 / ultimi 4 bit da %esp per fare che sia un multiplo di 16 che CPU richiede per qualche motivo
     //-16 pk è 16 (000.0010000) invece -16 è (1111...110000)
     andl $-16, %esp
 
     //pushl è per 32bit data push per 64bit
-    pushl %ebx // pusho su stack per il mio kernel in C pk grub ha messo le info che ho richieste nella memoria puntata dal registro ebx
+    pushl %ebx
+    //ebx ha il indirizzo che multiboot ha passato con le info, lo salvo nella stack
 
-    # Call the global constructors.
-//    call _init
+    lgdt (gdt_descriptor)
 
-    # Transfer control to the main kernel.
+    mov $KERNEL_DATA_SELECTOR, %ax //0x10 => 2 * 8Byte => offset dove trovare gdt entry
+    mov %ax, %ds
+    mov %ax, %es
+    mov %ax, %fs
+    mov %ax, %gs
+    mov %ax, %ss
+
+    ljmp $KERNEL_CODE_SELECTOR, $ip_set //0x08 => 1 * 8Byte
+
+
+.size _start, . - _start
+
+bad_bootloader:
+    movw $0x2F41, (0xB8000)
+    /* Disattiva gli interrupt ed entra in loop infinito per arrestare la CPU qui */
+    cli
+    hlt
+    jmp bad_bootloader
+
+ip_set:
+    // Call the global constructors.
+    call _init
+
+    //Transfer control to the main kernel.
     call kernel_main
 
+hang:
     # Hang if kernel_main unexpectedly returns.
     cli
 1:	hlt
     jmp 1b
 
-.size kernel_entry, . - kernel_entry
 
-.global .bad_bootloader
 
-.bad_bootloader:
-    movw $0x2F41, (0xB8000)
-    /* Disattiva gli interrupt ed entra in loop infinito per arrestare la CPU qui */
-    cli
-    hlt
-    jmp .bad_bootloader

@@ -21,6 +21,7 @@
 
 int kernel_log_internal(uint8_t color, const char *__restrict__ level,
                         const char *__restrict__ str, ...);
+
 #define log_trace(fmt, ...)                                                    \
   do {                                                                         \
     if (LOG_LEVEL_TRACE >= GLOBAL_LOG_LEVEL)                                   \

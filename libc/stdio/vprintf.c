@@ -25,7 +25,7 @@ int printVariable(const unsigned char *__restrict__ str, va_list *parameters) {
 
   switch (type) {
   case 's': {
-    const char *var = va_arg(*parameters, const char *);
+    const unsigned char *var = va_arg(*parameters, const unsigned char *);
     size_t len = strlen(var);
     if (printText(var, len) == -1) {
       return -1;
@@ -34,7 +34,7 @@ int printVariable(const unsigned char *__restrict__ str, va_list *parameters) {
   };
 
   case 'c': {
-    char var = (char)va_arg(*parameters, int);
+    unsigned char var = (unsigned char)va_arg(*parameters, int);
     if (printText(&var, 1) == -1) {
       return -1;
     }
@@ -42,7 +42,7 @@ int printVariable(const unsigned char *__restrict__ str, va_list *parameters) {
   };
   case 'd': {
     int var = va_arg(*parameters, int);
-    char num[11];
+    unsigned char num[11];
     int len = itoa(var, num);
     if (printText(num, len) == -1) {
       return -1;
@@ -51,7 +51,7 @@ int printVariable(const unsigned char *__restrict__ str, va_list *parameters) {
   };
   case 'x': {
     uint32_t var = va_arg(*parameters, uint32_t);
-    char numHex[16];
+    unsigned char numHex[16];
     int len = dec_to_hex(var, numHex);
     if (printText(numHex, len) == -1) {
       return -1;
