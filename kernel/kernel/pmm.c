@@ -2,11 +2,43 @@
 // Il bios e l'hw x86 non mettono o usano la memoria a caso ma a blocchi
 // la memoria è sempre multiplo di 32KB dunque l'array sarà sempre o 0x0 o 0xFF
 #include <kernel/pmm.h>
-#include <string.h>
 
-uint8_t bit_map_allocator[BIT_MAP_LEN] = {0};
+uint8_t bit_map_allocator[BIT_MAP_LEN];
+
+uint8_t pmm_free_page(uint32_t address) {
+  if (address == 0 || address % PAGE_SIZE) {
+    log_info("hsda");
+    return 1;
+  }
+
+  uint32_t bitmap_bit_index = address / PAGE_SIZE;
+
+  uint32_t array_index = bitmap_bit_index / 8;
+  uint8_t bit_position = bitmap_bit_index % 8;
+  if (array_index >= BIT_MAP_LEN)
+    return 1;
+
+  bit_map_allocator[array_index] &= ~(1 << bit_position);
+  return 0;
+}
+
+// return first 4KB alligned  physical addr available else returns 0
+uint32_t pmm_alloc_page() {
+  for (uint32_t array_index = 0; array_index < BIT_MAP_LEN; array_index++) {
+    if (bit_map_allocator[array_index] == 0xFF)
+      continue;
+    for (uint8_t bit_position = 0; bit_position < 8; bit_position++) {
+      if (is_bitmap_entry_occupato(array_index, bit_position))
+        continue;
+      bit_map_allocator[array_index] |= (1 << bit_position);
+      uint32_t frame_index = (array_index * 8) + bit_position;
+      return frame_index * PAGE_SIZE;
+    }
+  }
+  return 0x0;
+}
+
 void pmm_init_bitmap() {
-
   extern uint32_t _kernel_start;
   extern uint32_t _kernel_end;
 
@@ -30,6 +62,9 @@ void pmm_init_bitmap() {
         MULTIPLO_PER_ECCESSO(entry->base_addr, PAGE_SIZE);
     uint32_t padding = alligned_base_addr - entry->base_addr;
     uint32_t len = entry->length - padding;
+
+    if (len < PAGE_SIZE)
+      continue;
 
     do {
       size_t all_bits_index = alligned_base_addr / PAGE_SIZE;
@@ -64,21 +99,21 @@ void pmm_init_bitmap() {
 
       // 1 => occupato
       // 0 => libero
-      bit_map_allocator[array_index] |= (1 << bit_index);
+      // se oltre 4GB per ora
+      if (array_index >= BIT_MAP_LEN)
+        break;
+      bit_map_allocator[array_index] &= ~(1 << bit_index);
       alligned_base_addr += PAGE_SIZE;
       len -= PAGE_SIZE;
     } while (len >= PAGE_SIZE);
   }
 
-  uint32_t kernel_end_page =
+  uint32_t kernel_end_bit_position =
       MULTIPLO_PER_ECCESSO((uint32_t)&_kernel_end, PAGE_SIZE) / PAGE_SIZE;
 
-  uint32_t kernel_start_page = _kernel_start / PAGE_SIZE;
+  uint32_t kernel_end_bitmap_index =
+      MULTIPLO_PER_ECCESSO(kernel_end_bit_position, 8) / 8;
 
-  for (uint32_t i = kernel_start_page; i < kernel_end_page; i++) {
-    uint32_t array_index = i / 8;
-    uint8_t bit_index = i % 8;
-
-    bit_map_allocator[array_index] |= (1 << bit_index);
-  }
+  // rendo da 0 - kernel end occupato => primo 1MB pe hw , resto è kernel
+  memset(bit_map_allocator, 0xFF, kernel_end_bitmap_index);
 }

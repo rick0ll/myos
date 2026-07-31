@@ -1,3 +1,4 @@
+#include <kernel/tty.h>
 #include <limits.h>
 #include <stdarg.h>
 #include <stdint.h>
@@ -27,36 +28,24 @@ int printVariable(const unsigned char *__restrict__ str, va_list *parameters) {
   case 's': {
     const unsigned char *var = va_arg(*parameters, const unsigned char *);
     size_t len = strlen(var);
-    if (printText(var, len) == -1) {
-      return -1;
-    }
-    return len;
+    return printText(var, len);
   };
 
   case 'c': {
     unsigned char var = (unsigned char)va_arg(*parameters, int);
-    if (printText(&var, 1) == -1) {
-      return -1;
-    }
-    return 1;
+    return printText(&var, 1);
   };
   case 'd': {
     int var = va_arg(*parameters, int);
     unsigned char num[11];
     int len = itoa(var, num);
-    if (printText(num, len) == -1) {
-      return -1;
-    }
-    return len;
+    return printText(num, len);
   };
   case 'x': {
     uint32_t var = va_arg(*parameters, uint32_t);
     unsigned char numHex[16];
     int len = dec_to_hex(var, numHex);
-    if (printText(numHex, len) == -1) {
-      return -1;
-    }
-    return len;
+    return printText(numHex, len);
   };
   default: {
     return -1;
@@ -64,7 +53,8 @@ int printVariable(const unsigned char *__restrict__ str, va_list *parameters) {
   }
 }
 
-int vprintf(const unsigned char *__restrict__ str, va_list parameters) {
+int vprintf(const unsigned char *__restrict__ str, va_list parameters,
+            bool new_line) {
   int i = 0;
   size_t written = 0;
   while (str[i] != '\0') {
@@ -91,5 +81,7 @@ int vprintf(const unsigned char *__restrict__ str, va_list parameters) {
     printText(str, i);
     written += i;
   }
+  if (new_line)
+    terminal_putchar('\n');
   return written;
 }

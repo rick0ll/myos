@@ -15,7 +15,7 @@ int kernel_log_internal(uint8_t color, const char *__restrict__ level,
   va_list args;
   va_start(args, str);
 
-  int written = vprintf((const unsigned char *)str, args);
+  int written = vprintf((const unsigned char *)str, args, true);
 
   va_end(args);
 

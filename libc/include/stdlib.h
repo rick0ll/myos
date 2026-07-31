@@ -9,7 +9,7 @@ extern "C" {
 #endif
 
 #define MULTIPLO_PER_ECCESSO(NUM, SIZE)                                        \
-  (((size_t)(NUM) + ~(SIZE - 1)) & (SIZE - 1))
+  (((size_t)(NUM) + (SIZE - 1)) & ~(SIZE - 1))
 
 #define MULTIPLO_PER_DIFETTO(NUM, SIZE) ((size_t)(NUM) & (SIZE - 1))
 
