@@ -36,6 +36,7 @@ kernel/logger.o \
 kernel/parse_info_requests.o \
 kernel/mmap.o \
 kernel/pmm.o \
+kernel/vmm.o \
 
 OBJS=\
 $(KERNEL_BOOT)\

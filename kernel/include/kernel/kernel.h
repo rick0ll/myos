@@ -8,6 +8,7 @@
 #include <kernel/pmm.h>
 #include <kernel/stack_protector.h>
 #include <kernel/tty.h>
+#include <kernel/vmm.h>
 
 #include <stdint.h>
 

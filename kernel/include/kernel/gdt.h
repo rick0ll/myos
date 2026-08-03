@@ -1,6 +1,6 @@
 
-#ifndef KERNEL_GDT_H
-#define KERNEL_GDT_H 1
+#ifndef _KERNEL_GDT_H
+#define _KERNEL_GDT_H 1
 
 // ACCESS_BYTE
 //

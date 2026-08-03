@@ -14,6 +14,8 @@ void *memcpy(void *__restrict, const void *__restrict, size_t);
 void *memmove(void *, const void *, size_t);
 void *memset(void *dest, int value, size_t length);
 size_t strlen(const unsigned char *);
+char *strcpy(unsigned char *__restrict__ dst,
+             unsigned const char *__restrict__ text);
 
 #ifdef __cplusplus
 }

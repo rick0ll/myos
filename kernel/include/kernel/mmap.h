@@ -1,6 +1,6 @@
 
-#ifndef KERNEL_MMAP_H
-#define KERNEL_MMAP_H 1
+#ifndef _KERNEL_MMAP_H
+#define _KERNEL_MMAP_H 1
 
 #include <kernel/logger.h>
 #include <multiboot2.h>

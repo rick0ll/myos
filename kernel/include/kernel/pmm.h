@@ -1,5 +1,5 @@
-#ifndef PHYSICAL_MEMORY_MANAGER_H
-#define PHYSICAL_MEMORY_MANAGER_H 1
+#ifndef _KERNEL_PMM_H
+#define _KERNEL_PMM_H 1
 
 #include <kernel/mmap.h>
 #include <multiboot2.h>
@@ -23,7 +23,7 @@ static inline bool is_bitmap_entry_occupato(uint32_t array_index,
 }
 
 uint8_t pmm_free_page(uint32_t address);
-void pmm_init_bitmap();
-uint32_t pmm_alloc_page();
+void pmm_init(void);
+uint32_t pmm_alloc_page(void);
 
 #endif

@@ -3,11 +3,11 @@
 // la memoria è sempre multiplo di 32KB dunque l'array sarà sempre o 0x0 o 0xFF
 #include <kernel/pmm.h>
 
+static uint32_t last_allocated_array_index = 0;
 uint8_t bit_map_allocator[BIT_MAP_LEN];
 
 uint8_t pmm_free_page(uint32_t address) {
   if (address == 0 || address % PAGE_SIZE) {
-    log_info("hsda");
     return 1;
   }
 
@@ -18,27 +18,43 @@ uint8_t pmm_free_page(uint32_t address) {
   if (array_index >= BIT_MAP_LEN)
     return 1;
 
+  if (array_index < last_allocated_array_index) {
+    last_allocated_array_index = array_index;
+  }
   bit_map_allocator[array_index] &= ~(1 << bit_position);
   return 0;
 }
+static int alloc_count = 0;
+// return first 4KB alligned  physical addr available setted to 0 else returns 0
+uint32_t pmm_alloc_page(void) {
+  for (uint32_t array_index = last_allocated_array_index;
+       array_index < BIT_MAP_LEN; array_index++) {
 
-// return first 4KB alligned  physical addr available else returns 0
-uint32_t pmm_alloc_page() {
-  for (uint32_t array_index = 0; array_index < BIT_MAP_LEN; array_index++) {
     if (bit_map_allocator[array_index] == 0xFF)
       continue;
+
     for (uint8_t bit_position = 0; bit_position < 8; bit_position++) {
       if (is_bitmap_entry_occupato(array_index, bit_position))
         continue;
+
       bit_map_allocator[array_index] |= (1 << bit_position);
+
       uint32_t frame_index = (array_index * 8) + bit_position;
-      return frame_index * PAGE_SIZE;
+      uint32_t phys_addr = frame_index * PAGE_SIZE;
+
+      last_allocated_array_index = array_index;
+
+      uint32_t *buff = (uint32_t *)phys_addr;
+      memset(buff, 0, PAGE_SIZE);
+
+      return phys_addr;
     }
   }
+  log_trace("PMM Allocazione n. {d} -> Restituisco: {x}", alloc_count, 0x0);
   return 0x0;
 }
 
-void pmm_init_bitmap() {
+void pmm_init(void) {
   extern uint32_t _kernel_start;
   extern uint32_t _kernel_end;
 
@@ -115,5 +131,5 @@ void pmm_init_bitmap() {
       MULTIPLO_PER_ECCESSO(kernel_end_bit_position, 8) / 8;
 
   // rendo da 0 - kernel end occupato => primo 1MB pe hw , resto è kernel
-  memset(bit_map_allocator, 0xFF, kernel_end_bitmap_index);
+  memset(bit_map_allocator, UINT8_MAX, kernel_end_bitmap_index);
 }
