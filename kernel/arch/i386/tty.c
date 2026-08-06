@@ -1,3 +1,4 @@
+#include <kernel/memory.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -9,7 +10,8 @@
 
 static const size_t vga_width = 80;
 static const size_t vga_height = 25;
-static uint16_t *const vga_memory = (uint16_t *)0xb8000;
+/* static uint16_t *const vga_memory = (uint16_t *)PHYS_TO_VIRT(0xb8000); */
+static uint16_t *const vga_memory = (uint16_t *)0xC00B8000;
 
 static size_t terminal_row;
 static size_t terminal_column;

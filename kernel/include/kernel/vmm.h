@@ -1,10 +1,12 @@
 
+
 #ifndef _KERNEL_VMM_H
 #define _KERNEL_VMM_H 1
 
-#include <kernel/pmm.h>
-#include <stdint.h>
-#include <string.h>
+#define PTE_MEM_SIZE KB(4)
+#define PTE_MEM_SIZE_BIG MB(4)
+
+#define PDE_ENTRY_SIZE MB(4)
 
 #define ONLY_ADDR 0xFFFFF000
 
@@ -26,11 +28,21 @@
 #define PDE_ENTRIES_NUM 1024
 #define PTE_ENTRIES_NUM 1024
 
+#define KERNEL_PAGE                                                            \
+  0x0 | PE_PRESENT_FLAG | PE_RW_FLAG | PDE_MEM_SIZE_4MB_ENTRY_FLAG
+
 /*
  * 31-12 physc_addr
  * 11-0 flags
  *
  * */
+
+#ifndef __ASSEMBLER__
+
+#include <kernel/pmm.h>
+#include <stdint.h>
+#include <string.h>
+
 typedef uint32_t page_table_entry_t;
 typedef struct page_table_t {
   page_table_entry_t entries[PTE_ENTRIES_NUM];
@@ -48,4 +60,11 @@ void vmm_unmap_page(uint32_t virt_addr);
 static inline void __flush_tlb_single_page__(uint32_t pte_page_addr) {
   asm __volatile__("invlpg (%0)" : : "r"(pte_page_addr) : "memory");
 }
+static inline void _invalidate_tlb_cache(void) {
+  asm volatile("mov %%cr3, %%eax\n\t"
+               "mov %%eax, %%cr3\n\t" ::
+                   : "eax", "memory");
+}
+
+#endif // !__ASSEMBLER__
 #endif // _KERNEL_VMM_H

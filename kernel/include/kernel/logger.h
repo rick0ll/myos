@@ -1,5 +1,5 @@
-#ifndef KERNEL_LOG_PRINT
-#define KERNEL_LOG_PRINT 1
+#ifndef _KERNEL_LOG_PRINT
+#define _KERNEL_LOG_PRINT 1
 
 #include <stdint.h>
 #include <sys/cdefs.h>

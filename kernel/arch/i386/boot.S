@@ -8,12 +8,14 @@
 #define ASM_FILE 1
 #include <multiboot2.h>
 #include <kernel/gdt.h>
+#include <kernel/vmm.h>
+#include <kernel/memory.h>
 
 
 .set HEADER_LENGTH, multiboot_header_end - multiboot_header
 .set CHECKSUM, -( MAGIC_HEADER_MULTIBOOT2_NUMBER + ARCH_I386_PROTECTED + HEADER_LENGTH)
 
-.section .boot
+.section .boot, "ax"
 .align ALIGNMENT
 
 multiboot_header:
@@ -61,21 +63,24 @@ multiboot_header:
     module_alignment_end:
 
     //DEFINISCO RANGE POSZIONE IN MEMORIA DEL KERNEL
-    .align ALIGNMENT
-    relocatable_kernel_start:
-        .short RELOCATION_KERNEL_TAG
-        .short OPTIONAL
-        .long relocatable_kernel_end - relocatable_kernel_start
-        .long KERNEL_START_POSITION
-        .long KERNEL_END_POSITION
-        .long KERNEL_PAGING_ALIGNMENT
-        .long POSITION_PREFERENCE_LOW
-    relocatable_kernel_end:
+    /*
+    ; .align ALIGNMENT
+    ; relocatable_kernel_start:
+    ;     .short RELOCATION_KERNEL_TAG
+    ;     .short OPTIONAL
+    ;     .long relocatable_kernel_end - relocatable_kernel_start
+    ;     .long KERNEL_START_POSITION
+    ;     .long KERNEL_END_POSITION
+    ;     .long KERNEL_PAGING_ALIGNMENT
+    ;     .long POSITION_PREFERENCE_LOW
+    ; relocatable_kernel_end:
+    */
 
     //DICO CHE VOGLIO INFORMAZIONI AGGIUTIVE DAL BOOTLOADER
     .align ALIGNMENT
     information_request_start:
         .short INFORMATION_REQUEST_TAG
+
         .short OPTIONAL
         .long information_request_end - information_request_start
 
@@ -99,6 +104,47 @@ multiboot_header:
     final_tag_end:
 multiboot_header_end:
 
+.global _start
+_start:
+
+
+    cmpl $MAGIC_MULTIBOOT2_PROOF_NUMBER, %eax//se bootloader è multiboot2 allora in eax c'è il valore else non è il bootloader che il mio kernel usa
+    jne bad_bootloader
+       //preparare %esp per avere stack p.longer pronta per l'uso della stack
+    movl $(stack_top - KERNEL_VIRT_BASE), %esp
+
+    //tolgo 16 / ultimi 4 bit da %esp per fare che sia un multiplo di 16 che CPU richiede per qualche motivo
+    //-16 pk è 16 (000.0010000) invece -16 è (1111...110000)
+    andl $-16, %esp
+
+    //pushl è per 32bit data push per 64bit
+    add KERNEL_VIRT_BASE, %ebx
+    pushl %ebx
+    //ebx ha il indirizzo che multiboot ha passato con le info, lo salvo nella stack
+
+    // 1. Carichiamo la Page Directory
+    //la label non è stata spostata da AT del linker ma i dati si, sono stati spostati da GRUB
+    //dunque sposto dove punta label
+    mov $(boot_page_directory - KERNEL_VIRT_BASE), %ecx
+    mov %ecx, %cr3
+
+    //per modificae registri controllo crx bisogna sempre passare per reg
+    //2. attivohe pages 4mb per sicurezz dimensioni kernel
+    mov %cr4, %ecx
+    or $0x00000010, %ecx
+    mov %ecx, %cr4
+
+    //3. attivo paginazione
+    mov %cr0, %ecx
+    or $0x80000000, %ecx
+    mov %ecx, %cr0
+
+    //le label non sono modificate da AT in linker.ld dunque higher half è già a 0xC000000 oltre
+    //uso lea (load effective addr) per prendre addr assoluto e non solo un offset
+    lea higher_half, %ecx
+    jmp *%ecx
+
+.size _start, . - _start
 # Reserve a stack for the initial thread.
 .section .bss
 .align STACK_ALIGNMENT
@@ -115,27 +161,40 @@ gdt_start:
 gdt_end:
 
 gdt_descriptor:
-    .short gdt_end - gdt_start - 1 #Limit => num ultimo elemento
-    .int gdt_start                  #gdt addr
+.short gdt_end - gdt_start - 1 #Limit => num ultimo elemento
+.int gdt_start                  #gdt addr
+
+.align 4096
+
+boot_page_directory:
+    # PDE 0: Identity Map (0x00000000 -> 0x00000000) con bit Present, RW, Page Size (4MB)
+    //questa è la prima entry di pde, con indirizzo  Page table 0x0
+    //punta a addr phys = 0x0 - 4MB dove c'è il codice fisico del booting (boot.s)
+    //booting < 4MB
+    .long KERNEL_PAGE
+    //da  entry pde 1 fino a 767 posti a 0 => arrivo fino a 3GB in pde index
+    .fill 767, 4, 0
+    # PDE 768: Higher Half (KERNEL_VIRT_BASE -> 0x00000000)
+    //la entry punta allo stesso addr fisico di PDE[0] ma cambia l'indirizzo virtuale pk è in pos 768 => 768 pagine * 4MB/pagina = 3GB
+    .long KERNEL_PAGE
+    //Restanti 255 dei 1024 entries
+    .fill 255, 4, 0
 
 
 .section .text
-.global _start
-.type _start, @function
-_start:
-    cmpl $MAGIC_MULTIBOOT2_PROOF_NUMBER, %eax//se bootloader è multiboot2 allora in eax c'è il valore else non è il bootloader che il mio kernel usa
-    jne bad_bootloader
+higher_half:
 
-    //preparare %esp per avere stack p.longer pronta per l'uso della stack
-    movl $stack_top, %esp
+    //sistemo esp
+    add $KERNEL_VIRT_BASE, %esp
 
-    //tolgo 16 / ultimi 4 bit da %esp per fare che sia un multiplo di 16 che CPU richiede per qualche motivo
-    //-16 pk è 16 (000.0010000) invece -16 è (1111...110000)
-    andl $-16, %esp
+    //tolgo pde[0]
+    //movl 32bit
+    movl $0, boot_page_directory
+    //invalido cache
+    mov %cr3, %ecx
+    mov %ecx, %cr3
 
-    //pushl è per 32bit data push per 64bit
-    pushl %ebx
-    //ebx ha il indirizzo che multiboot ha passato con le info, lo salvo nella stack
+
 
     lgdt (gdt_descriptor)
 
@@ -146,10 +205,10 @@ _start:
     mov %ax, %gs
     mov %ax, %ss
 
+
     ljmp $KERNEL_CODE_SELECTOR, $ip_set //0x08 => 1 * 8Byte
 
 
-.size _start, . - _start
 
 bad_bootloader:
     movw $0x2F41, (0xB8000)

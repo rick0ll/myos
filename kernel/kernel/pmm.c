@@ -1,6 +1,8 @@
 
 // Il bios e l'hw x86 non mettono o usano la memoria a caso ma a blocchi
 // la memoria è sempre multiplo di 32KB dunque l'array sarà sempre o 0x0 o 0xFF
+#include "kernel/logger.h"
+#include "kernel/memory.h"
 #include <kernel/pmm.h>
 
 static uint32_t last_allocated_array_index = 0;
@@ -27,6 +29,7 @@ uint8_t pmm_free_page(uint32_t address) {
 static int alloc_count = 0;
 // return first 4KB alligned  physical addr available setted to 0 else returns 0
 uint32_t pmm_alloc_page(void) {
+
   for (uint32_t array_index = last_allocated_array_index;
        array_index < BIT_MAP_LEN; array_index++) {
 
@@ -44,13 +47,10 @@ uint32_t pmm_alloc_page(void) {
 
       last_allocated_array_index = array_index;
 
-      uint32_t *buff = (uint32_t *)phys_addr;
-      memset(buff, 0, PAGE_SIZE);
-
       return phys_addr;
     }
   }
-  log_trace("PMM Allocazione n. {d} -> Restituisco: {x}", alloc_count, 0x0);
+  log_warn("no pmm allocation");
   return 0x0;
 }
 
@@ -125,7 +125,8 @@ void pmm_init(void) {
   }
 
   uint32_t kernel_end_bit_position =
-      MULTIPLO_PER_ECCESSO((uint32_t)&_kernel_end, PAGE_SIZE) / PAGE_SIZE;
+      MULTIPLO_PER_ECCESSO((uint32_t)VIRT_TO_PHYS(&_kernel_end), PAGE_SIZE) /
+      PAGE_SIZE);
 
   uint32_t kernel_end_bitmap_index =
       MULTIPLO_PER_ECCESSO(kernel_end_bit_position, 8) / 8;

@@ -4,8 +4,6 @@
 uint32_t active_page_table_entries[1024] = {0};
 page_directory_t *page_directory_ptr = NULL;
 
-void vmm_enable_paging(uint32_t page_directory_addr);
-
 void vmm_map_page(uint32_t phys_addr, uint32_t virt_addr, uint32_t flags) {
   if (phys_addr % KB(4) != 0) {
     log_error("phys_addr is not 4KB alligned. phys_addr: {x}", phys_addr);
@@ -20,8 +18,11 @@ void vmm_map_page(uint32_t phys_addr, uint32_t virt_addr, uint32_t flags) {
   uint32_t pde_index = virt_addr / MB(4);
   if ((page_directory_ptr->entries[pde_index] & PE_PRESENT_FLAG) !=
       PE_PRESENT_FLAG) {
+    void *phys_addr = (void *)pmm_alloc_page();
+    void *virt_addr = phys_addr + 0xC0000000;
+    memset(virt_addr, 0, PAGE_SIZE);
     page_directory_ptr->entries[pde_index] =
-        pmm_alloc_page() | PE_PRESENT_FLAG | PE_RW_FLAG;
+        (uint32_t)virt_addr | PE_PRESENT_FLAG | PE_RW_FLAG;
   }
 
   page_table_t *page_table =
@@ -77,40 +78,8 @@ void vmm_unmap_page(uint32_t virt_addr) {
 }
 
 void vmm_init() {
-  page_directory_ptr = (page_directory_t *)pmm_alloc_page();
-
-  page_table_t *page_table_ptr = (page_table_t *)pmm_alloc_page();
-
-  // Mappo in modo 1:1 i primi 4MB => 1024 * 4KB => quando la cpu attiverà la
-  // memoria virtuale vedrà i suoi indirizzi di esecuzione kernel normali e
-  // non virtuali ma senza corrispondenza fisica, serve all'inizio del setup
-  // vmm
-  for (int i = 0; i < PTE_ENTRIES_NUM; i++) {
-    page_table_ptr->entries[i] = (i * PAGE_SIZE) | PE_PRESENT_FLAG | PE_RW_FLAG;
-  }
-
-  page_directory_ptr->entries[0] =
-      ((uint32_t)page_table_ptr) | PE_PRESENT_FLAG | PE_RW_FLAG;
-
-  vmm_enable_paging((uint32_t)page_directory_ptr);
-}
-
-void vmm_enable_paging(uint32_t page_directory_addr) {
-  // metto su CR3 la prima variabile che gli passo ossia indirizzo PDT
-  __asm__ volatile("mov %0, %%cr3\n\t"
-                   // Siccome non posso fare operazioni or direttamente su cr0
-                   "mov %%cr0, %%eax\n\t"
-                   // or 10000..00 pongo a 1 il bit 31^ ossia enable paging
-                   "or $0x80000000, %%eax\n\t"
-                   // rimetto su CR0
-                   "mov %%eax, %%cr0\n\t"
-                   :
-                   // dice al compiler di mettere questa var in un registro
-                   // così che %0 lo possa leggere
-                   : "r"(page_directory_addr)
-                   // dico al compilatore che uso il registro eax  e sporco
-                   // anche memoria dunque di non aspettarsi che abbia il
-                   // valore precedente al mio dunque ignora il valore di eax
-                   // e ricarica dalla ram il valore precedente
-                   : "%eax", "memory");
+  void *phys_addr = (void *)pmm_alloc_page();
+  void *virt_addr = phys_addr + 0xC0000000;
+  memset(virt_addr, 0, PAGE_SIZE);
+  page_directory_ptr = (page_directory_t *)virt_addr;
 }
