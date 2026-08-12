@@ -37,6 +37,7 @@ kernel/parse_info_requests.o \
 kernel/mmap.o \
 kernel/pmm.o \
 kernel/vmm.o \
+kernel/malloc.o \
 
 OBJS=\
 $(KERNEL_BOOT)\

@@ -28,20 +28,34 @@
 #define PDE_ENTRIES_NUM 1024
 #define PTE_ENTRIES_NUM 1024
 
-#define KERNEL_PAGE                                                            \
+#define KERNEL_PAGE_BOOT                                                       \
   0x0 | PE_PRESENT_FLAG | PE_RW_FLAG | PDE_MEM_SIZE_4MB_ENTRY_FLAG
 
-/*
- * 31-12 physc_addr
- * 11-0 flags
- *
+/*                                                     \
+ * 31-12 physc_addr                                    \
+ * 11-0 flags                                          \
+ *                                                     \
  * */
 
 #ifndef __ASSEMBLER__
 
+#include <kernel/memory.h>
 #include <kernel/pmm.h>
 #include <stdint.h>
-#include <string.h>
+
+#define KERNEL_STD_PAGE_FLAGS 0x0 | PE_PRESENT_FLAG | PE_RW_FLAG
+
+#define KHEAP_START KERNEL_VIRT_BASE + 0x00400000
+
+#define CHECK_PAGE_ALLIGNMENT(addr)                                            \
+  do {                                                                         \
+    if (addr % KB(4) != 0) {                                                   \
+      log_error("{s} is not 4KB alligned. virt_addr: {x}", #addr, addr);       \
+      return -1;                                                               \
+    }                                                                          \
+  } while (0)
+
+#define IS_THERE_BIT(obj, bit) (((obj) & (bit)) == (bit))
 
 typedef uint32_t page_table_entry_t;
 typedef struct page_table_t {
@@ -55,16 +69,17 @@ typedef struct page_directory_t {
 } page_directory_t;
 
 void vmm_init();
-void vmm_map_page(uint32_t phys_addr, uint32_t virt_addr, uint32_t flags);
-void vmm_unmap_page(uint32_t virt_addr);
+void *vmm_alloc_page(uint32_t flags);
+int vmm_map_page(uint32_t phys_addr, uint32_t virt_addr, uint32_t flags);
+int vmm_unmap_page(uint32_t virt_addr);
 static inline void __flush_tlb_single_page__(uint32_t pte_page_addr) {
   asm __volatile__("invlpg (%0)" : : "r"(pte_page_addr) : "memory");
 }
-static inline void _invalidate_tlb_cache(void) {
+static inline void __invalidate_tlb_cache(void) {
   asm volatile("mov %%cr3, %%eax\n\t"
                "mov %%eax, %%cr3\n\t" ::
                    : "eax", "memory");
 }
 
-#endif // !__ASSEMBLER__
-#endif // _KERNEL_VMM_H
+#endif
+#endif

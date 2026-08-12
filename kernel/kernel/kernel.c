@@ -9,6 +9,7 @@ __attribute__((no_stack_protector)) void kernel_main(uintptr_t mb_addr) {
   parse_info_request(PHYS_TO_VIRT(mb_addr));
   pmm_init();
   vmm_init();
+  init_kmalloc();
 
   log_info("Kernel avviato con successo!");
 }

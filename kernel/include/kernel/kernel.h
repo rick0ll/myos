@@ -2,6 +2,7 @@
 
 #include <kernel/gdt.h>
 #include <kernel/logger.h>
+#include <kernel/malloc.h>
 #include <kernel/memory.h>
 #include <kernel/mmap.h>
 #include <kernel/panic.h>

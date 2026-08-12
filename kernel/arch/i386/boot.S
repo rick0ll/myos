@@ -171,12 +171,12 @@ boot_page_directory:
     //questa è la prima entry di pde, con indirizzo  Page table 0x0
     //punta a addr phys = 0x0 - 4MB dove c'è il codice fisico del booting (boot.s)
     //booting < 4MB
-    .long KERNEL_PAGE
+    .long KERNEL_PAGE_BOOT
     //da  entry pde 1 fino a 767 posti a 0 => arrivo fino a 3GB in pde index
     .fill 767, 4, 0
     # PDE 768: Higher Half (KERNEL_VIRT_BASE -> 0x00000000)
     //la entry punta allo stesso addr fisico di PDE[0] ma cambia l'indirizzo virtuale pk è in pos 768 => 768 pagine * 4MB/pagina = 3GB
-    .long KERNEL_PAGE
+    .long KERNEL_PAGE_BOOT
     //Restanti 255 dei 1024 entries
     .fill 255, 4, 0
 

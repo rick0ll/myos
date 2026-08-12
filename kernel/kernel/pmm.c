@@ -1,7 +1,6 @@
 
 // Il bios e l'hw x86 non mettono o usano la memoria a caso ma a blocchi
 // la memoria è sempre multiplo di 32KB dunque l'array sarà sempre o 0x0 o 0xFF
-#include "kernel/logger.h"
 #include "kernel/memory.h"
 #include <kernel/pmm.h>
 
@@ -26,7 +25,7 @@ uint8_t pmm_free_page(uint32_t address) {
   bit_map_allocator[array_index] &= ~(1 << bit_position);
   return 0;
 }
-static int alloc_count = 0;
+
 // return first 4KB alligned  physical addr available setted to 0 else returns 0
 uint32_t pmm_alloc_page(void) {
 
