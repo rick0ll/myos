@@ -1,24 +1,50 @@
+/*
+ * ============================================================================
+ * Questo file viene usato come supporto nella creazione dell'header corretto
+ * per multiboot2 e per la elaborazione delle informazioni trasmesse dal
+ * bootloader.
+ * ============================================================================
+ * */
+
 #ifndef MULTIBOOT_HEADER
 #define MULTIBOOT_HEADER 1
 
 #define ALIGNMENT 8
 
+// Si tratta di un valore 'magico' utilizzato per verificare che si abbia
+// veramente richiesto il tipo di bootloader, multiboot2
 #define MAGIC_HEADER_MULTIBOOT2_NUMBER 0xE85250D6
+
+// Si tratta di un valore 'magico' che multiboot2 passa nel registro %eax che
+// conferma che multiboot2 è stato usato
 #define MAGIC_MULTIBOOT2_PROOF_NUMBER 0x36D76289
+
+// Valore che indica al bootloader l'architettura target
 #define ARCH_I386_PROTECTED 0
+
+/* ------------------------------------------------------------------------
+ * Le seguenti costanti servono come supporto per la richiesta di azioni
+ * aggiuntive a multiboot2  */
 
 #define OPTIONAL 1
 #define MANDATORY 0
 
+// Tag per definire il punto di entrata del codice assembly
 #define ENTRY_POINT_TAG 3
 
+// Tag per abilitare lo schermo in modalità framebuffer (non VGA) e con
+// determinate dimensioni
 #define FRAMEBUFFER_TAG 5
 #define WIDTH 2048
 #define HEIGHT 1024
 #define COLORS_PER_PIXEL 32
 
+// Tag per imporre l'allineamento dei moduli (file caricati prima del kernel in
+// RAM) a 4KB
 #define MODULE_ALIGNMENT_TAG 6
 
+// Tag per abilitare il rilocamento del codice del kernel in una qualsiasi
+// posizione tra start_position ed end_position
 #define RELOCATION_KERNEL_TAG 10
 #define KERNEL_START_POSITION 0x00100000
 #define KERNEL_END_POSITION 0x0FFFFFFF
@@ -27,22 +53,62 @@
 #define POSITION_PREFERENCE_LOW 1
 #define POSITION_PREFERENCE_HIGH 2
 
+/*
+ * Costanti di supporto per la richiesta di informazioni aggiuntive a
+ * multiboot2
+ * */
+
+// Tag per richiedere informazioni aggiuntive al bootloader
 #define INFORMATION_REQUEST_TAG 1
-#define MULTIBOOT_COMMAND_LINE_INFO 1 // si
+
+// Ricevo la stringa aggiutiva passata nel comando di avvio di qemu (come uno
+// strv)
+#define MULTIBOOT_COMMAND_LINE_INFO 1
+
+// Ricevo il nome del bootloader (multiboot2 in questo caso)
 #define MULTIBOOT_BOOTLOADER_NAME_INFO 2
+
+// Ricevo informazioni su dove si trovano i moduli (file caricati prima del
+// kernel) in memoria
 #define MULTIBOOT_MODULES_RAM_ADDRESSES_INFO 3
+
+// Ricevo informazioni di base sulla memoria come quanta ce n'è senza
+// distinguere se libera o meno
 #define MULTIBOOT_BASIC_MEMORY_INFO 4
+
+// Ricevo informazioni dettagliate su come è disposta la memoria e che tipo di
+// memoria si tratta
 #define MULTIBOOT_MEMORY_MAP_INFO 6
-#define MULTIBOOT_ELF_SYMBOLS_INFO 9
+
+// Ricevo informazioni necessarie per gestire lo schermo in modalità framebuffer
 #define MULTIBOOT_FRAMEBUFFER_INFO 8
+
+// Ricevo la tabella delle sezioni ELF
+#define MULTIBOOT_ELF_SYMBOLS_INFO 9
+
+// Ricevo la tabella SMBIOS
 #define MULTIBOOT_SMBIOS_TABLE_INFO 13
+
+// Ricevo la tabella ACPI (v1 o v2)
 #define MULTIBOOT_ACPI_TABLE_V1_INFO 14
 #define MULTIBOOT_ACPI_TABLE_V2_INFO 15
+
+// Ricevo informazioni della scheda rete (solo se il kernel viene avviato via
+// rete)
 #define MULTIBOOT_NETWORKING_INFO 16
 
+/*
+ * Fine della sezione di richiesta informazioni al bootloader
+ * ------------------------------------------------------------
+ */
+
+// Tag per indicare la fine della serie tag
 #define END_REQUEST_TAG 0
 
+// Stack di dimensioni 16KB
 #define STACK_SIZE 16384
+
+// Ogni entry della stack deve essere allineato a 16
 #define STACK_ALIGNMENT 16
 
 #ifndef __ASSEMBLER__

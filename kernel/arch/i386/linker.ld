@@ -1,24 +1,21 @@
 ENTRY(_start)
 
-
 SECTIONS
 {
 
-    /*indirizzo fisico di caricamento di .boot (siccome multiboot header va messo nei primi kb)*/
     . = 1M;
+
+    kernel_offset = 0xC0000000;
 
     /*in boot c'è _start, l'entry => siccome prima di tutto all'izinio la paginazione non c'è lable _start
      * non può essere messo in indirizzoi di memoria alti */
-    .boot ALIGN(4K) : {
+    .boot ALIGN(8) : AT(ADDR(.boot))
+    {
         KEEP(*(.boot))
     }
 
-    kernel_offset  = 0xC0000000;
-    /* . += kernel_offset; */
     . += kernel_offset;
-
     _kernel_start = .;
-
     /* Unica sezione per l'header e il codice */
     /*metto le sezioni del kernel da 1MB in poi */
     /*AT imposta LMA(Load memory addr), solo riferito al bootloader (multiboot2) che carica il kernel in memoria*/
@@ -26,7 +23,6 @@ SECTIONS
     /*Le label non vengono spostate con AT, nemmeno quelle in boot.s pk sono valorizzate (sostituite con num) dal linker, prima di bootloading*/
     .text ALIGN(4K) : AT(ADDR(.text) - kernel_offset)
     {
-
         /* 2. Il codice sorgente subito dopo */
         *(.text*)
     }

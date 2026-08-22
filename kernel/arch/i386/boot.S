@@ -1,11 +1,3 @@
-// # Declare constants for the multiboot header.
-// .set .align,    1<<0             # align loaded modules on page boundaries
-// .set MEMINFO,  1<<1             # provide memory map
-// .set FLAGS,    .align | MEMINFO  # this is the Multiboot 'flag' field
-// .set MAGIC,    MANDATORYxE85250D6       # 'magic number' lets bootloader find the header
-// .set CHECKSUM, -(MAGIC + FLAGS) # checksum of above, to prove we are multiboot
-
-#define ASM_FILE 1
 #include <multiboot2.h>
 #include <kernel/gdt.h>
 #include <kernel/vmm.h>
@@ -13,7 +5,7 @@
 
 
 .set HEADER_LENGTH, multiboot_header_end - multiboot_header
-.set CHECKSUM, -( MAGIC_HEADER_MULTIBOOT2_NUMBER + ARCH_I386_PROTECTED + HEADER_LENGTH)
+.set CHECKSUM, -(MAGIC_HEADER_MULTIBOOT2_NUMBER + ARCH_I386_PROTECTED + HEADER_LENGTH)
 
 .section .boot, "ax"
 .align ALIGNMENT
@@ -24,12 +16,7 @@ multiboot_header:
     .long HEADER_LENGTH
     .long CHECKSUM
 
-    //.align forza allineamento dati in multipli di 8 byte
 
-    //tag format
-    // type
-    // obbligatorio (0) opzionale (1)
-    // size
     //DEFINISCO ENTRY POINT OS
     .align ALIGNMENT
     entry_point_tag_start:
@@ -107,7 +94,6 @@ multiboot_header_end:
 .global _start
 _start:
 
-
     cmpl $MAGIC_MULTIBOOT2_PROOF_NUMBER, %eax//se bootloader è multiboot2 allora in eax c'è il valore else non è il bootloader che il mio kernel usa
     jne bad_bootloader
        //preparare %esp per avere stack p.longer pronta per l'uso della stack
@@ -127,6 +113,8 @@ _start:
     //dunque sposto dove punta label
     mov $(boot_page_directory - KERNEL_VIRT_BASE), %ecx
     mov %ecx, %cr3
+
+
 
     //per modificae registri controllo crx bisogna sempre passare per reg
     //2. attivohe pages 4mb per sicurezz dimensioni kernel
@@ -211,7 +199,8 @@ higher_half:
 
 
 bad_bootloader:
-    movw $0x2F41, (0xB8000)
+    movl $0x000B8000, %edi
+    movw $0x2F41, (%edi)
     /* Disattiva gli interrupt ed entra in loop infinito per arrestare la CPU qui */
     cli
     hlt

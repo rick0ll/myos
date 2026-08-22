@@ -1,29 +1,8 @@
 [
   {
-    "file": "arch/i386/crti.S",
-    "arguments": [
-      "/Users/rick0ll/opt/cross/bin/i686-elf-gcc",
-      "-MD",
-      "-c",
-      "arch/i386/crti.S",
-      "-o",
-      "arch/i386/crti.o",
-      "-O2",
-      "-g",
-      "-ffreestanding",
-      "-Wall",
-      "-Wextra",
-      "-D__is_kernel",
-      "-Iinclude",
-      "-I../libc/include/"
-    ],
-    "directory": "/Users/rick0ll/Dev/Personale/mio_os2/kernel",
-    "output": "arch/i386/crti.o"
-  },
-  {
     "file": "arch/i386/boot.S",
     "arguments": [
-      "/Users/rick0ll/opt/cross/bin/i686-elf-gcc",
+      "/usr/bin/cc",
       "-MD",
       "-c",
       "arch/i386/boot.S",
@@ -34,76 +13,11 @@
       "-ffreestanding",
       "-Wall",
       "-Wextra",
-      "-D__is_kernel",
+      "-D__is_myos_kernel",
       "-Iinclude",
-      "-I../libc/include/"
+      "-Iinclude/"
     ],
-    "directory": "/Users/rick0ll/Dev/Personale/mio_os2/kernel",
+    "directory": "/Users/rick0ll/Dev/Personale/mio_os/kernel",
     "output": "arch/i386/boot.o"
-  },
-  {
-    "file": "arch/i386/tty.c",
-    "arguments": [
-      "/Users/rick0ll/opt/cross/bin/i686-elf-gcc",
-      "-MD",
-      "-c",
-      "arch/i386/tty.c",
-      "-o",
-      "arch/i386/tty.o",
-      "-std=gnu11",
-      "-O2",
-      "-g",
-      "-ffreestanding",
-      "-Wall",
-      "-Wextra",
-      "-D__is_kernel",
-      "-Iinclude",
-      "-I../libc/include/"
-    ],
-    "directory": "/Users/rick0ll/Dev/Personale/mio_os2/kernel",
-    "output": "arch/i386/tty.o"
-  },
-  {
-    "file": "kernel/kernel.c",
-    "arguments": [
-      "/Users/rick0ll/opt/cross/bin/i686-elf-gcc",
-      "-MD",
-      "-c",
-      "kernel/kernel.c",
-      "-o",
-      "kernel/kernel.o",
-      "-std=gnu11",
-      "-O2",
-      "-g",
-      "-ffreestanding",
-      "-Wall",
-      "-Wextra",
-      "-D__is_kernel",
-      "-Iinclude",
-      "-I../libc/include/"
-    ],
-    "directory": "/Users/rick0ll/Dev/Personale/mio_os2/kernel",
-    "output": "kernel/kernel.o"
-  },
-  {
-    "file": "arch/i386/crtn.S",
-    "arguments": [
-      "/Users/rick0ll/opt/cross/bin/i686-elf-gcc",
-      "-MD",
-      "-c",
-      "arch/i386/crtn.S",
-      "-o",
-      "arch/i386/crtn.o",
-      "-O2",
-      "-g",
-      "-ffreestanding",
-      "-Wall",
-      "-Wextra",
-      "-D__is_kernel",
-      "-Iinclude",
-      "-I../libc/include/"
-    ],
-    "directory": "/Users/rick0ll/Dev/Personale/mio_os2/kernel",
-    "output": "arch/i386/crtn.o"
   }
 ]
