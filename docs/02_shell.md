@@ -80,3 +80,20 @@ menuentry "hola amigo" {
 
 - `if [[ $# -eq 0 ]] || [[ -z "$1" ]]; then` :
   Verifica che siano stati passati parametri o che il parametro passato sia di lunghezza 0
+
+## lsp-fix.sh
+
+**Sistema lsp di neovim**
+
+Controlla se non esiste il comando bear
+
+- `if ! [ -x "$(command -v bear)" ]; then`:
+    - `-x` : E' un operatore che verifica se il file è eseguibile.
+    - `$(...)`: Esegue il comando all'interno e trasforma l'output del comando in una stringa di testo che ritorna.
+    - `command -v {comando}` : Ritorna il path dell'esguibile del comando o il suo eventuale alias.
+
+> `bear` è un comando utile per generare un file `compile_commands.json`.
+> Il file dice all'editor/lsp come ogni file viene compilato quindi che librerie vede e dove sono.
+
+- `bear -- ./headers.sh ./build.sh` : Scrive il file compile_commands.json in ogni cartella in cui c'è stata la build con le informazione di compilazione
+  ottenute da `headers.sh` e `build.sh`

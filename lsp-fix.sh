@@ -9,7 +9,6 @@ if ! [ -x "$(command -v bear)" ]; then
     exit 1
 fi
 
-bear -- ./headers.sh
-bear -- ./build.sh
+bear -- ./headers.sh ./build.sh
 
 echo "good boy"
