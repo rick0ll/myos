@@ -4,3 +4,4 @@ sysroot
 *.json
 *.txt
 *.log
+.*

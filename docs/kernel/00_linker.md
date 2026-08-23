@@ -36,6 +36,11 @@ Di norma il compilator linka i file basandosi sul sistema operativo sottostante 
 - 'AT(...)' : Indica la posizione fisica della sezione, viene usata per distinguere l'indirizzo fisico del kernel (1MB in poi) da quello virtuale (0xC0000000 in poi).
   Il compilatore considererà l'indirizzo virtuale (0xC0000000) ignorando quello che dice AT.
 
+- **`AT(...)`**: Definisce l'indirizzo fisico di caricamento (LMA - Load Memory Address).
+  Serve a GRUB/bootloader per sapere in quale zona della RAM fisica (da 1MB in poi) copiare la sezione.
+  Il **linker** utilizzerà comunque l'indirizzo virtuale (VMA - Virtual Memory Address, da `0xC0000000` in poi) per calcolare
+  il valore numerico di tutti i simboli e le istruzioni, ignorando l'indirizzo indicato da `AT(...)` per la risoluzione dei simboli.
+
 ### SEZIONI
 
 - 'boot' : Sezione contenente l'header di Multiboot2, l'inizializzazione della stack, inizializzazione paging, inizializzazione GDT

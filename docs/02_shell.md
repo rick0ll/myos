@@ -77,3 +77,6 @@ menuentry "hola amigo" {
 ## debug.sh
 
 **Avvia l'emulatore in modalità di debug**
+
+- `if [[ $# -eq 0 ]] || [[ -z "$1" ]]; then` :
+  Verifica che siano stati passati parametri o che il parametro passato sia di lunghezza 0

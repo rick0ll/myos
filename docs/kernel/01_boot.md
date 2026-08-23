@@ -13,6 +13,8 @@ boot.S serve a permettere il funzionamento del bootloader, preparare la stack pe
 
 ## COMANDI COMUNI
 
+**Per T&TD**
+
 - `.section {nome}` : Definisce una sezione. Il linker utilizza il nome delle sezioni per organizzarle.
 
 - `.align {size}` : Allinea la memoria a {size}. E' obbligatorio allineare la stack a 16bit, siccome il codice generato dal compilatore si aspetta la stack a 16bit-alligned.
@@ -30,6 +32,8 @@ boot.S serve a permettere il funzionamento del bootloader, preparare la stack pe
 - `.global {label}` : Di norma le label sono private al file ma con .global una label può essere usata in altri file linkati (file .asm, .c, e il linker stesso)
 
 - `.skip {size}` : Salta size spazi bit di memoria
+
+- `[comando]l` : Comando per operazioni a 32bit
 
 ## SEZIONI
 
@@ -137,9 +141,64 @@ Ogni tag presenta la seguente struttura di base assieme ad altri elementi specif
 (base_tag_structure)
 ```
 
+#### \_start
+
+- `global _start`: Rende la label \_start visibile ad altri file come il file del linker.
+
+- `cmpl $MAGIC_MULTIBOOT2_PROOF_NUMBER, %eax`: Verifica se viene usato multiboot2 come bootloader verificando che il registro `ax` contenga uno specifico numero.
+
+- `jne bad_bootloader` : Nel caso non siano uguali i valori precedentemente comparati allora si salta alla label `bad_bootloader`.
+
+##### bad_bootloader
+
+- `movl $0x000B8000, %edi`: Salva l'indirizzo della VGA nel registro `edi` (Extender Destination Index, usato spesso per rifermenti a zone di memoria)
+- `movw $0x2F41, (%edi)`: Scrive sull'indirizzo salvato su `edi` una lettera 'B' bianca su sfondo blu. (Per debug)(Non posso fare direttametne valore lettera - indirizzo senz usare edi?)
+- `cli`: (Clear Interrupt Flag) Disabilito gli interrupt mettendo a 0 il regitro `IF` (Interrupt Flags). La CPU ignorerà ogni hardware input (pk la cpu, non è l'os a gestirli?)
+- `hlt`: (Halt) Mette la CPU in uno stato dormiente (low-power sleep state (C1 state)). Ferma ciclo FDE (Fetch, Decode, Execute) quindi il susseguirsi di istruzioni.
+- `jmp bad_bootloader` : Non servirebbe siccome `hlt` nel caso la cpu riprenda l'esecuzione ritorna alla label bad_bootloader.
+
+- `movl $(stack_top - KERNEL_VIRT_BASE), %esp`: Salvo nel registro `esp` (Extended Stack Pointer) l'indirizzo della parte alta della stack `stack_top` - `KERNEL_VIRT_BASE`
+  Siccome la definizione della stack si trova in `.BSS` che è posto nella zona higher half (3GB in su) devo sottrarre l'indirizzo virtuale,
+  almeno fino a che il paging non è estato attivato.
+
+- `andl $-16, %esp` : Allineo `esp` a 4bit come richiesto dalla CPU.
+  16 => 00...10000; Quando viene usato '-' allora si invertono i bit: !16 => 11...01111; e viene sommato 1: -16 => 11...10000;
+
+> Per gestire il segno meno si usa un bit di segno, il bit più significativo (Little Endian), e viene considerato il valore di quel bit (se posto a 1) con segno -
+> Poi vengono attivati bit a destra del bit più significativo che vengono considerati positivi e quidi sommatti al primo valore negativo.
+> Si ottengono così numeri negativi da -1 a 2^(n-1) (n = numero di bit usati dalla variabile)
+> (n-1 siccome il bit più significativo rappresenta il segno, se primo bit a 1 allora la cpu lo pensa come num negativo e torna indietro da 2^n fino a 2^0)
+
+- `add KERNEL_VIRT_BASE, %ebx` : Rendo l'indirizzo contenuto in `ebx` un indirizzo virtuale del kernel.
+  `ebx` contiene il riferimento alle informazioni che sono state richieste a multiboot2.
+
+- `pushl ebx` : Salvo `ebx` sulla stack così da poterlo usare in kernel_main.
+
+- `mov $(boot_page_directory - KERNEL_VIRT_BASE), %ebx`: Passo il riferimento all'indirizzo fisico della tabella PDT al registro `ebx`.
+  Il linker ha spostato le parti di boot.S nell'indirizzo fisico dopo primo MB ma le label non vengono spostate dal linker, dunque puntano all'indirizzo virtuale.
+  Il paging ancora non c'è ma anche se ci fosse `cr3` richiede l'indirizzo fisico, non passa tramite MMU.
+
+- `mov %ebx, %cr3` : Passo il riferimento della PDT al registro di controllo `cr3`, usato dalla CPU per il paging.
+
+- `mov %cr4, %ecx`: Self-explanatory (`cr4` contiene flag associate al paging)
+
+- `or $0x00000010, %ecx` : Attivo il bit indicante pagine da 4MB. Lo faccio solo nella fase di inizializzazione higher half così non devo creare sia Page Directory che PTE
+
+- `mov %ecx, %cr4`: Self-explanatory
+
+- `mov %cr0, %ecx` : Self-explanatory (`cr0` contiene varie flag)
+
+- `or $0x80000000, %ecx` : Attivo il bit che indica l'attivazione del paging.
+
+- `mov %ecx, %cr0`: Self-explanatory
+
+- `jmp higher_half`: Vado sull'indirizzo di memoria che `ecx` contiene
+
+- `.size _start, . - _start` : Indico a multiboot2 la dimensione di \_start, utile per il debug con la tabella dei simboli ELF (so poco niente)
+
 ## .BSS
 
-**Sezione che si occupa di definire la dimensione della stack (zona di memoria non inizializzatta)**
+**Sezione che si occupa di definire la dimensione della stack (zona di memoria non inizializzatta) del kernel**
 
 - `.align STACK_ALLIGNMENT` : Allinea la stack a 16byte come richiesto dal compilatore C
 - `.skip STACK_SIZE` : Salta STACK_SIZE bit di memoria. E' la zona di memoria dove risiederà la stack
@@ -280,7 +339,7 @@ Utilizza il **TLB (Translation Lookaside Buffer)**, una velocissima cache hardwa
 
 > **Importante:** La CPU non aggiorna il TLB automaticamente se una Page Table viene modificata! L'accuratezza del TLB dipende dal Kernel, che deve invalidarlo quando altera le mappature. In x86 si fa in due modi:
 >
-> - **Invalidare una singola pagina:** Tramite l'istruzione assembly `invlpg (indirizzo_virtuale)`.
+> - **Invalidare una singola pagina (PD Entry : 4MB/ PT Entry 4KB):** Tramite l'istruzione assembly `invlpg (PDE index)` oppure `invlpg (indirizzo_virtuale)`.
 > - **Flush totale del TLB:** Ricaricando l'intero registro `CR3` (`mov %cr3, %eax; mov %eax, %cr3`).
 
 #### Architettura MMU (x86 usa Hardware-managed TLB)
@@ -372,4 +431,36 @@ La paginazione permette anche a una gestione degli accessi a livello di pagine e
 
 **TLDR;**
 
-Zona di memoria dove risiede il codice da eseguire. Preparo la stack, carico GDT, chiamo kernel main
+Zona di memoria dove risiede il codice da eseguire. Preparo la stack per higher half kernel e chiamo kernel main
+
+- `higher_half:` : Label
+- `add $KERNEL_VIRT_BASE, %esp`: Sistemo lo stack pointer per funzionare con indirizzamento virtuale aggiungendo l'indirizzo virtuale del kernel.
+- `movl $0, boot_page_directory` : Metto a '0', cancello, la prima entry del paging che ho usato per prima di spostare il kernel a un indirizzo virtuale.
+  Lo metto a '0' così non c'è rischio che un programma che riceve indirizzo virtuale al PDE[0] scriva nel codice del kernel.
+
+- `invlpg (0)`: Invalida solo prima entry di PDE, siccome era attivo PDE con 4MB.
+
+- `lgdt (gdt_descriptor)` : Comando specifico per caricare sul registro `GDTR` (Global Descriptor Table Register) l'indirizzo del descrittore di tabella GDT.
+
+- `mov $KERNEL_DATA_SELECTOR, %ax` : Metto in `ax` l'offset per arrivare alla sezione di `Data Selector` partendo dal GDT start
+
+```asm
+mov %ax, %ds
+mov %ax, %es
+mov %ax, %fs
+mov %ax, %gs
+mov %ax, %ss
+```
+
+Aggiorno i registri di segmento (finiscono con 's' segment).
+La cpu allora per ogni registro va all'indice GDT che gli ho passato tramite offset e salva i permessi letti in una parte di ogni registro (Descriptor Cache/Shadow Register)
+Così sa che tipo di permesso ogni registro ha.
+
+- `ljmp $KERNEL_CODE_SELECTOR, $ip_set` : Esegue un long jump verso la label `ip_set` e
+  aggiorna anche il registro di segmento del codice `CS` con il valore del offset per il descriptor del codice kernel.
+  Non si può fare direttamente `mov $KERNEL_CODE_SELECTOR, cs`
+
+#### ip_set
+
+- `call _init` : Chiama i costruttori globali. Vedi crti.S, crtn.S.
+- `call kernel_main` :Chiama il kernel main, il quale ricevo come parametri i valori nella stack (addr di multiboot2 info).

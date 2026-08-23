@@ -17,6 +17,12 @@
     - '-S' : (Freeze at Startup) non avvia subito esecuzione codice, sarà il debugger a farla partire
     - '-cdrom myos.iso' : inserisce il pagine immagine dell'os, imposta come disco di avvio primario
 
+Apre il GDB (debugger) per x86_64-elf siccome non ho trovato uno per i686-elf, ma funziona uguale, retrocompatibile.
+
+- `x86_64-elf-gdb isodir/boot/myos.kernel -ex "target remote :1234" -ex "b $1`:
+    - `-ex target remote :1234` : esegue un comando nel debuger per connetersi alla porta 1234 dove il serve dell'emulatore comunica.
+    - `-ex "b $1`: esegue comando per mettere un break point nella funzione voluta.
+
 ## qemu.sh
 
 **Avvia la macchina virtuale con l'OS e reindirizza i log a qemu.log**
@@ -35,3 +41,11 @@
 `i686-elf-grub-mkrescue -o {file_name_output} {source_dir}`: - '{source_dir}' : Cartella contenente il file binario del kernel e il file di configurazione di GRUB
 
 _Si usa i686 pk è l'ultimo processore commerciale a 32bit e il progetto è un OS a 32 bit_
+
+## debug.sh
+
+**Apre il debugger GDB**
+
+`x86_64-elf-gdb isodir/boot/myos.kernel -ex "target remote :1234"`: Apre il GDB (debugger) per x86_64-elf siccome non ho trovato uno per i686-elf, ma funziona uguale, retrocompatibile. -
+
+- `-ex target remote :1234` : esegue un comando nel debuger per connetersi alla porta 1234 dove il serve dell'emulatore comunica

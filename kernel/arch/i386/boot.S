@@ -96,6 +96,7 @@ _start:
 
     cmpl $MAGIC_MULTIBOOT2_PROOF_NUMBER, %eax//se bootloader è multiboot2 allora in eax c'è il valore else non è il bootloader che il mio kernel usa
     jne bad_bootloader
+
        //preparare %esp per avere stack p.longer pronta per l'uso della stack
     movl $(stack_top - KERNEL_VIRT_BASE), %esp
 
@@ -111,9 +112,9 @@ _start:
     // 1. Carichiamo la Page Directory
     //la label non è stata spostata da AT del linker ma i dati si, sono stati spostati da GRUB
     //dunque sposto dove punta label
-    mov $(boot_page_directory - KERNEL_VIRT_BASE), %ecx
-    mov %ecx, %cr3
+    mov $(boot_page_directory - KERNEL_VIRT_BASE), %ebx
 
+    mov %ebx, %cr3
 
 
     //per modificae registri controllo crx bisogna sempre passare per reg
@@ -127,10 +128,15 @@ _start:
     or $0x80000000, %ecx
     mov %ecx, %cr0
 
+ //jmp bad_bootloader
     //le label non sono modificate da AT in linker.ld dunque higher half è già a 0xC000000 oltre
     //uso lea (load effective addr) per prendre addr assoluto e non solo un offset
-    lea higher_half, %ecx
-    jmp *%ecx
+    // lea higher_half, %ecx
+    // jmp *%ecx
+
+
+    //jmp bad_bootloader
+    jmp higher_half
 
 .size _start, . - _start
 # Reserve a stack for the initial thread.
@@ -178,10 +184,13 @@ higher_half:
     //tolgo pde[0]
     //movl 32bit
     movl $0, boot_page_directory
-    //invalido cache
-    mov %cr3, %ecx
-    mov %ecx, %cr3
 
+    //invalido cache
+    // mov %cr3, %ecx
+    // mov %ecx, %cr3
+
+    //invalido pde[0]
+    invlpg (0)
 
 
     lgdt (gdt_descriptor)
@@ -196,7 +205,13 @@ higher_half:
 
     ljmp $KERNEL_CODE_SELECTOR, $ip_set //0x08 => 1 * 8Byte
 
+ip_set:
+    // Call the global constructors.
+    call _init
 
+    //Transfer control to the main kernel.
+    call kernel_main
+    jmp hang
 
 bad_bootloader:
     movl $0x000B8000, %edi
@@ -206,12 +221,6 @@ bad_bootloader:
     hlt
     jmp bad_bootloader
 
-ip_set:
-    // Call the global constructors.
-    call _init
-
-    //Transfer control to the main kernel.
-    call kernel_main
 
 hang:
     # Hang if kernel_main unexpectedly returns.

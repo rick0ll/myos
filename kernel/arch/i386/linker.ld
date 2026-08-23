@@ -9,7 +9,7 @@ SECTIONS
 
     /*in boot c'è _start, l'entry => siccome prima di tutto all'izinio la paginazione non c'è lable _start
      * non può essere messo in indirizzoi di memoria alti */
-    .boot ALIGN(8) : AT(ADDR(.boot))
+    .boot ALIGN(4K) : AT(ADDR(.boot))
     {
         KEEP(*(.boot))
     }
